@@ -4,12 +4,18 @@
 #include <unistd.h>
 #include <string.h>
 
-void read_from_fifo(char *);
+struct data {
+	char* sender;
+	char* receiver;
+};
+
+void read_from_fifo(char *, struct data);
 
 int main(int argc, char* argv[])
 {
     struct stat st;
     char* fifo_name1;
+    struct data server_data;
     
     if(argc != 2){
 		printf("You should give 2 parameters!\n");
@@ -25,7 +31,7 @@ int main(int argc, char* argv[])
     if (stat(fifo_name1, &st) != 0)
         mkfifo(fifo_name1, 0666);
         
-    read_from_fifo(fifo_name1);
+    read_from_fifo(fifo_name1, server_data);
 
 	// delete fifos
     unlink(fifo_name1);
@@ -34,7 +40,7 @@ int main(int argc, char* argv[])
     return EXIT_SUCCESS;
 }  
 
-void read_from_fifo(char * fifo_name){
+void read_from_fifo(char * fifo_name, struct data server_data){
 	int s2c, counter;
     char buf[10];
 	
@@ -43,7 +49,7 @@ void read_from_fifo(char * fifo_name){
     // receive messages
     while (1)
     {
-        if (read(s2c, &buf, sizeof(char) * 10) > 0)
+        if (read(s2c, &buf, sizeof(char) * 10 * sizeof(struct data)) > 0)
         {
 			counter = 0;
             printf("%s", buf);
