@@ -10,15 +10,26 @@ struct data {
 	char* receiver;
 };
 
+typedef struct main_fifo_msg_s{
+   
+     int   START_ID;
+     char source[15];
+     char destination[15];
+     int    message[80];
+     int   STOP_ID;
+     
+} main_fifo_msg_t;
+
 void sig_handler(int signo);
 
-void read_from_fifo(char *, struct data);
+void read_from_fifo(char *, main_fifo_msg_t);
 
 int main(int argc, char* argv[])
 {
     struct stat st;
     char* fifo_name1;
-    struct data server_data;
+    //struct data server_data;
+    main_fifo_msg_t server_data;
     
     if(argc != 2){
 		printf("You should give 2 parameters!\n");
@@ -43,7 +54,7 @@ int main(int argc, char* argv[])
     return EXIT_SUCCESS;
 }  
 
-void read_from_fifo(char * fifo_name, struct data server_data){
+void read_from_fifo(char * fifo_name, main_fifo_msg_t server_data){
 	int s2c, counter;
     char buf[80];
 	
@@ -53,7 +64,7 @@ void read_from_fifo(char * fifo_name, struct data server_data){
     // receive messages
     while (1)
     {
-        if (read(s2c, &buf, sizeof(char) * 10 * sizeof(struct data)) > 0)
+        if (read(s2c, &buf, sizeof(char) * 10 * sizeof(main_fifo_msg_t)) > 0)
         {
 			counter = 0;
             printf("%s", buf);
