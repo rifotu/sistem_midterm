@@ -4,11 +4,11 @@
 #include <unistd.h>
 #include <string.h>
 
+void read_from_fifo(char *);
+
 int main(int argc, char* argv[])
 {
-    int s2c, counter;
     struct stat st;
-    char buf[10];
     char* fifo_name1;
     
     if(argc != 2){
@@ -19,28 +19,13 @@ int main(int argc, char* argv[])
 		fifo_name1 = (char*)malloc(sizeof(char) * strlen(argv[1]) + 1);
 		strcpy(fifo_name1, argv[1]);
 	}
-	
 	printf("FIFO_NAME: %s\n", fifo_name1);
     
     // if no fifos, create them
     if (stat(fifo_name1, &st) != 0)
         mkfifo(fifo_name1, 0666);
         
-	s2c = open(fifo_name1, O_RDONLY);
-
-    // receive messages
-    while (1)
-    {
-        if (read(s2c, &buf, sizeof(char) * 10) > 0)
-        {
-			counter = 0;
-            printf("%s \n", buf);
-        }
-        sleep(1);
-        counter++;
-        if (counter>3) 
-			break;
-    }
+    read_from_fifo(fifo_name1);
 
 	// delete fifos
     unlink(fifo_name1);
@@ -48,3 +33,26 @@ int main(int argc, char* argv[])
     printf("server exit successfully\n");
     return EXIT_SUCCESS;
 }  
+
+void read_from_fifo(char * fifo_name){
+	int s2c, counter;
+    char buf[10];
+	
+	s2c = open(fifo_name, O_RDONLY);
+
+    // receive messages
+    while (1)
+    {
+        if (read(s2c, &buf, sizeof(char) * 10) > 0)
+        {
+			counter = 0;
+            printf("%s", buf);
+            printf("\n");
+        }
+        sleep(1);
+        counter++;
+        if (counter>3) 
+			break;
+    }
+
+}

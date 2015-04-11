@@ -6,11 +6,11 @@
 #include <unistd.h>
 #include <string.h>
 
+void write_to_fifo(char *);
+
 int main(int argc, char* argv[])
-{       
-    int s2c, i; 
+{   
     char* fifo_name1;
-    char msg[80], buf[10];
 
 	if(argc != 2){
 		printf("You should give 2 parameters!\n");
@@ -19,12 +19,21 @@ int main(int argc, char* argv[])
 		fifo_name1 = (char*)malloc(sizeof(char) * strlen(argv[1]) + 1);
 		strcpy(fifo_name1, argv[1]);
 	}
-	
 	printf("FIFO_NAME: %s\n", fifo_name1);
+	
+	write_to_fifo(fifo_name1);
 
-    s2c= open(fifo_name1, O_WRONLY);
+    printf("client exit successfully\n");
+    return EXIT_SUCCESS;
+}
 
-    // start sending messages, with 3s interval
+void write_to_fifo(char * fifo_name){
+	
+    int s2c, i;
+    char msg[80], buf[10];
+    
+    s2c = open(fifo_name, O_WRONLY);
+	// start sending messages, with 3s interval
     for (i=0; i<5; i++)
     {
         printf("Message #%d\n", i);
@@ -38,7 +47,4 @@ int main(int argc, char* argv[])
 
         sleep(2);
     }
-
-    printf("client exit successfully\n");
-    return EXIT_SUCCESS;
 }
