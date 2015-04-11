@@ -3,11 +3,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 
 struct data {
 	char* sender;
 	char* receiver;
 };
+
+void sig_handler(int signo);
 
 void read_from_fifo(char *, struct data);
 
@@ -45,7 +48,8 @@ void read_from_fifo(char * fifo_name, struct data server_data){
     char buf[10];
 	
 	s2c = open(fifo_name, O_RDONLY);
-
+	
+	if (signal(SIGINT, sig_handler) == SIG_ERR);
     // receive messages
     while (1)
     {
@@ -61,4 +65,11 @@ void read_from_fifo(char * fifo_name, struct data server_data){
 			break;
     }
 
+}
+
+void sig_handler(int signo)
+{
+	if (signo == SIGINT)
+		printf("received Ctrl + C! Program Exiting.\n");
+	exit(0);
 }

@@ -5,12 +5,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 
 struct data {
 	char* sender;
 	char* receiver;
 };
 
+void sig_handler(int signo);
 void write_to_fifo(char *, struct data);
 
 int main(int argc, char* argv[])
@@ -41,6 +43,8 @@ void write_to_fifo(char * fifo_name, struct data client_data){
     
     s2c = open(fifo_name, O_WRONLY);
     
+    if (signal(SIGINT, sig_handler) == SIG_ERR);
+    
     buf = (char*)malloc(sizeof(char) * 10 * sizeof(struct data));
 	// start sending messages, with 3s interval
     for (i=0; i<5; i++)
@@ -64,4 +68,11 @@ void write_to_fifo(char * fifo_name, struct data client_data){
 
         sleep(2);
     }
+}
+
+void sig_handler(int signo)
+{
+	if (signo == SIGINT)
+		printf("received Ctrl + C! Program Exiting.\n");
+	exit(0);
 }
