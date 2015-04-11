@@ -5,11 +5,6 @@
 #include <string.h>
 #include <signal.h>
 
-struct data {
-	char* sender;
-	char* receiver;
-};
-
 typedef struct main_fifo_msg_s{
    
      int   START_ID;
@@ -28,7 +23,6 @@ int main(int argc, char* argv[])
 {
     struct stat st;
     char* fifo_name1;
-    //struct data server_data;
     main_fifo_msg_t server_data;
     
     if(argc != 2){

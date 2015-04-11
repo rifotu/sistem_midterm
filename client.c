@@ -7,54 +7,63 @@
 #include <string.h>
 #include <signal.h>
 
-struct data {
-	char* sender;
-	char* receiver;
+struct client_msg_s{
+	
+	char* client_name;
+	int wait_time;
+	char* op_name;
 };
 
 typedef struct main_fifo_msg_s{
    
      int   START_ID;
+     int   STOP_ID;
      char* source;
      char* destination;
-     int    message[80];
-     int   STOP_ID;
+     struct client_msg_s* message;
      
 } main_fifo_msg_t;
 
 void sig_handler(int signo);
-void write_to_fifo(char *, main_fifo_msg_t, int, char*);
+void write_to_fifo(char *, struct main_fifo_msg_s);
 
 int main(int argc, char* argv[])
 {   
 	int wait_time;
 	char* op_name;
     char* fifo_name1;
-    //struct data client_data;
-    main_fifo_msg_t client_data;
+    char* client_name;
+    struct main_fifo_msg_s main_fifo_msg;
+    struct client_msg_s client_msg;
 
 	if(argc == 1){
 		printf("You should give more parameters!\n");
-		printf("Example usage: ./server [FIFO_NAME] [WAITING_TIME] [OPERATION NAME]\n");
+		printf("Example usage: ./clientX [FIFO_NAME] [WAITING_TIME] [OPERATION NAME]\n");
 	} else {
+		
+		client_msg.client_name = (char*)malloc(sizeof(char) * strlen(argv[0]) + 1);
+		strcpy(client_msg.client_name, argv[0]);
+		
 		fifo_name1 = (char*)malloc(sizeof(char) * strlen(argv[1]) + 1);
 		strcpy(fifo_name1, argv[1]);
 		
-		op_name = (char*)malloc(sizeof(char) * strlen(argv[3]) + 1);
-		strcpy(op_name, argv[3]);
+		client_msg.wait_time = atoi(argv[2]);
 		
-		wait_time = atoi(argv[2]);
+		client_msg.op_name = (char*)malloc(sizeof(char) * strlen(argv[3]) + 1);
+		strcpy(client_msg.op_name, argv[3]);
 	}
 	printf("FIFO_NAME: %s\n", fifo_name1);
 	
-	write_to_fifo(fifo_name1, client_data, wait_time, op_name);
+	main_fifo_msg.message = (struct client_msg_s*)malloc(sizeof(struct client_msg_s)*1);
+	main_fifo_msg.message = &client_msg;
+	
+	write_to_fifo(fifo_name1, main_fifo_msg);
 
     printf("client exit successfully\n");
     return EXIT_SUCCESS;
 }
 
-void write_to_fifo(char * fifo_name, main_fifo_msg_t client_data,
-					int wait_time, char* op_name){
+void write_to_fifo(char * fifo_name, struct main_fifo_msg_s main_fifo_msg){
 	
     int s2c, i;
     char msg[80];
@@ -64,31 +73,33 @@ void write_to_fifo(char * fifo_name, main_fifo_msg_t client_data,
     
     if (signal(SIGINT, sig_handler) == SIG_ERR);
     
-    buf = (char*)malloc(sizeof(char) * 10 * sizeof(main_fifo_msg_t));
+    buf = (char*)malloc(sizeof(char) * 10 * sizeof(struct main_fifo_msg_s));
 	// start sending messages, with 3s interval
     for (i=0; i<5; i++)
     {
-		client_data.source = (char*)malloc(sizeof(char) * 10);
-		sprintf(client_data.source, "Client %d", i);
+		main_fifo_msg.source = (char*)malloc(sizeof(char) * 10);
+		sprintf(main_fifo_msg.source, "Client %d", i);
 		
-		client_data.destination = (char*)malloc(sizeof(char) * 10);
-		strcpy(client_data.destination, "Server");
-        printf("Message #%d to %s\n", i, client_data.destination);
+		main_fifo_msg.destination = (char*)malloc(sizeof(char) * 10);
+		strcpy(main_fifo_msg.destination, "Server");
+        printf("Message #%d to %s\n", i, main_fifo_msg.destination);
 
         strcpy(msg, "Message #"); 
         sprintf(buf, "%d", i);
         strcat(msg, buf);
         strcat(msg, " from ");
-        strcat(msg, client_data.source);
+        strcat(msg, main_fifo_msg.source);
         strcat(msg, " to ");
-        strcat(msg, client_data.destination);
+        strcat(msg, main_fifo_msg.destination);
         strcat(msg, " OPNAME: ");
-        strcat(msg, op_name);
+        strcat(msg, main_fifo_msg.message->op_name);
+        strcat(msg, " CLIENT_NAME: ");
+        strcat(msg, main_fifo_msg.message->client_name);
         strcat(msg, "\0");
 
         write(s2c, msg, strlen(msg)+1);
 
-        sleep(wait_time);
+        sleep(main_fifo_msg.message->wait_time);
     }
 }
 
