@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
 void read_from_fifo(char * fifo_name, struct data server_data){
 	int s2c, counter;
-    char buf[10];
+    char buf[80];
 	
 	s2c = open(fifo_name, O_RDONLY);
 	
