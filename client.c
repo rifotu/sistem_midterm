@@ -19,15 +19,15 @@ struct client_msg_s{
 typedef struct main_fifo_msg_s{
    
      int   START_ID;
+     char source[15];
+     char destination[15];
+     struct client_msg_s message[80];
+     // durum bilgisi exception falan
      int   STOP_ID;
-     char* source;
-     char* destination;
-     struct client_msg_s* message;
-     
 } main_fifo_msg_t;
 
 void sig_handler(int signo);
-void write_to_fifo(char *, struct main_fifo_msg_s);
+void write_to_fifo(char *, struct main_fifo_msg_s, int);
 
 int main(int argc, char* argv[])
 {   
@@ -36,6 +36,9 @@ int main(int argc, char* argv[])
     char* client_name;
     struct main_fifo_msg_s main_fifo_msg;
     struct client_msg_s client_msg;
+    int counter = 1;
+    
+    if (signal(SIGINT, sig_handler) == SIG_ERR);
 
 	if(argc == 1){
 		printf("You should give more parameters!\n");
@@ -55,53 +58,49 @@ int main(int argc, char* argv[])
 	}
 	printf("FIFO_NAME: %s\n", fifo_name1);
 	
-	main_fifo_msg.message = (struct client_msg_s*)malloc(sizeof(struct client_msg_s)*1);
-	main_fifo_msg.message = &client_msg;
+	main_fifo_msg.message[0] = client_msg;
 	
-	write_to_fifo(fifo_name1, main_fifo_msg);
-
+	while(1){
+		write_to_fifo(fifo_name1, main_fifo_msg, counter);
+		counter++;
+	}
+	
     printf("client exit successfully\n");
     return EXIT_SUCCESS;
 }
 
-void write_to_fifo(char * fifo_name, struct main_fifo_msg_s main_fifo_msg){
+void write_to_fifo(char * fifo_name, struct main_fifo_msg_s main_fifo_msg,
+					int counter){
 	
-    int s2c, i;
+    int s2c;
     char msg[80];
     char* buf;
     
     s2c = open(fifo_name, O_WRONLY);
     
-    if (signal(SIGINT, sig_handler) == SIG_ERR);
-    
     buf = (char*)malloc(sizeof(char) * 10 * sizeof(struct main_fifo_msg_s));
 	// start sending messages, with 3s interval
-    for (i=0; i<5; i++)
-    {
-		main_fifo_msg.source = (char*)malloc(sizeof(char) * 10);
-		sprintf(main_fifo_msg.source, "Client %d", i);
-		
-		main_fifo_msg.destination = (char*)malloc(sizeof(char) * 10);
-		strcpy(main_fifo_msg.destination, "Server");
-        printf("Message #%d to %s\n", i, main_fifo_msg.destination);
+	sprintf(main_fifo_msg.source, "Client %d", counter);
+	
+	strcpy(main_fifo_msg.destination, "Server");
+	printf("Message #%d to %s\n", counter, main_fifo_msg.destination);
 
-        strcpy(msg, "Message #"); 
-        sprintf(buf, "%d", i);
-        strcat(msg, buf);
-        strcat(msg, " from ");
-        strcat(msg, main_fifo_msg.source);
-        strcat(msg, " to ");
-        strcat(msg, main_fifo_msg.destination);
-        strcat(msg, " OPNAME: ");
-        strcat(msg, main_fifo_msg.message->op_name);
-        strcat(msg, " CLIENT_NAME: ");
-        strcat(msg, main_fifo_msg.message->client_name);
-        strcat(msg, "\0");
+	strcpy(msg, "Message #"); 
+	sprintf(buf, "%d", counter);
+	strcat(msg, buf);
+	strcat(msg, " from ");
+	strcat(msg, main_fifo_msg.source);
+	strcat(msg, " to ");
+	strcat(msg, main_fifo_msg.destination);
+	strcat(msg, " OPNAME: ");
+	strcat(msg, main_fifo_msg.message->op_name);
+	strcat(msg, " CLIENT_NAME: ");
+	strcat(msg, main_fifo_msg.message->client_name);
+	strcat(msg, "\0");
 
-        write(s2c, msg, strlen(msg)+1);
+	write(s2c, msg, strlen(msg)+1);
 
-        sleep(main_fifo_msg.message->wait_time);
-    }
+	sleep(main_fifo_msg.message->wait_time);
 }
 
 void sig_handler(int signo)

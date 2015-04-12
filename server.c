@@ -19,12 +19,15 @@ typedef struct main_fifo_msg_s{
 } main_fifo_msg_t;
 
 void sig_handler(int signo);
-void read_from_fifo(char *, main_fifo_msg_t);
+void read_from_fifo(char *, main_fifo_msg_t, int);
 
 int main(int argc, char* argv[])
 {
     struct stat st;
     main_fifo_msg_t server_data;
+    int counter;
+    
+    if (signal(SIGINT, sig_handler) == SIG_ERR);
     
     if(argc != 2){
 		printf("You should give 2 parameters!\n");
@@ -40,8 +43,11 @@ int main(int argc, char* argv[])
     if (stat(fifo_name1, &st) != 0)
         mkfifo(fifo_name1, 0666);
         
-    read_from_fifo(fifo_name1, server_data);
-
+    //while'ı çek buraya
+    while(1){
+		read_from_fifo(fifo_name1, server_data, counter);
+	}
+	
 	// delete fifos
     unlink(fifo_name1);
 
@@ -49,28 +55,24 @@ int main(int argc, char* argv[])
     return EXIT_SUCCESS;
 }  
 
-void read_from_fifo(char * fifo_name, main_fifo_msg_t server_data){
-	int s2c, counter;
+void read_from_fifo(char * fifo_name, main_fifo_msg_t server_data,
+					int counter){
+	int s2c;
     char buf[80];
 	
 	s2c = open(fifo_name, O_RDONLY);
 	
-	if (signal(SIGINT, sig_handler) == SIG_ERR);
     // receive messages
-    while (1)
-    {
-        if (read(s2c, &buf, sizeof(char) * 10 * sizeof(main_fifo_msg_t)) > 0)
-        {
-			counter = 0;
-            printf("%s", buf);
-            printf("\n");
-        }
-        sleep(1);
-        counter++;
-        if (counter>3) 
-			break;
-    }
-
+	if (read(s2c, &buf, sizeof(char) * 10 * sizeof(main_fifo_msg_t)) > 0)
+	{
+		counter = 0;
+		printf("%s", buf);
+		printf("\n");
+	}
+	sleep(1);
+	counter++;
+	if (counter>3) 
+		return;
 }
 
 void sig_handler(int signo)
