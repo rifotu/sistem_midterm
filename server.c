@@ -6,20 +6,22 @@
 #include <signal.h>
 
 char* fifo_name1;
+int fifo_id;
 char* server_log_file = "server.log";
 
 typedef struct main_fifo_msg_s{
    
-     int   START_ID;
+     int  START_ID;
      char source[15];
      char destination[15];
-     int    message[80];
-     int   STOP_ID;
+     int  dac;
+     int  message[80];
+     int  STOP_ID;
      
 } main_fifo_msg_t;
 
 void sig_handler(int signo);
-void read_from_fifo(char *, main_fifo_msg_t, int);
+void read_from_fifo(int s2c, main_fifo_msg_t *server_data);
 
 int main(int argc, char* argv[])
 {
@@ -38,6 +40,8 @@ int main(int argc, char* argv[])
 		strcpy(fifo_name1, argv[1]);
 	}
 	printf("FIFO_NAME: %s\n", fifo_name1);
+
+	fifo_id = open(fifo_name1, O_RDONLY);
     
     // if no fifos, create them
     if (stat(fifo_name1, &st) != 0)
@@ -45,7 +49,8 @@ int main(int argc, char* argv[])
         
     //while'ı çek buraya
     while(1){
-		read_from_fifo(fifo_name1, server_data, counter);
+        sleep(5);
+		read_from_fifo(fifo_id, &server_data);
 	}
 	
 	// delete fifos
@@ -55,24 +60,17 @@ int main(int argc, char* argv[])
     return EXIT_SUCCESS;
 }  
 
-void read_from_fifo(char * fifo_name, main_fifo_msg_t server_data,
-					int counter){
-	int s2c;
-    char buf[80];
-	
-	s2c = open(fifo_name, O_RDONLY);
-	
+void read_from_fifo(int s2c, main_fifo_msg_t *server_data)
+{
+    int len = 0;
     // receive messages
-	if (read(s2c, &buf, sizeof(char) * 10 * sizeof(main_fifo_msg_t)) > 0)
+	if (len = read(s2c, server_data, sizeof(main_fifo_msg_t)) > 0)
 	{
-		counter = 0;
-		printf("%s", buf);
-		printf("\n");
+		printf("read data: %d\n", len);
+        printf("source name: %s\n", server_data->source);
 	}
 	sleep(1);
-	counter++;
-	if (counter>3) 
-		return;
+	return;
 }
 
 void sig_handler(int signo)
