@@ -7,6 +7,8 @@
 #include <string.h>
 #include <signal.h>
 
+char* fifo_name1;
+
 struct client_msg_s{
 	
 	char* client_name;
@@ -31,7 +33,6 @@ int main(int argc, char* argv[])
 {   
 	int wait_time;
 	char* op_name;
-    char* fifo_name1;
     char* client_name;
     struct main_fifo_msg_s main_fifo_msg;
     struct client_msg_s client_msg;

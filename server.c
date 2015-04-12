@@ -5,6 +5,9 @@
 #include <string.h>
 #include <signal.h>
 
+char* fifo_name1;
+char* server_log_file = "server.log";
+
 typedef struct main_fifo_msg_s{
    
      int   START_ID;
@@ -16,13 +19,11 @@ typedef struct main_fifo_msg_s{
 } main_fifo_msg_t;
 
 void sig_handler(int signo);
-
 void read_from_fifo(char *, main_fifo_msg_t);
 
 int main(int argc, char* argv[])
 {
     struct stat st;
-    char* fifo_name1;
     main_fifo_msg_t server_data;
     
     if(argc != 2){
@@ -74,7 +75,15 @@ void read_from_fifo(char * fifo_name, main_fifo_msg_t server_data){
 
 void sig_handler(int signo)
 {
-	if (signo == SIGINT)
+	FILE* fp;
+	printf("fifo name: %s\n", fifo_name1);
+	if (signo == SIGINT){
 		printf("received Ctrl + C! Program Exiting.\n");
+		
+		fp = fopen(server_log_file, "w");
+		fprintf(fp,"<CTRL+C> signal has arrived, all processes are terminated!\n");
+	}
+	fclose(fp);
+	unlink(fifo_name1);
 	exit(0);
 }
